@@ -14,18 +14,15 @@ if (program.all) console.log('list all files in directory: -a');
 if (program.long) console.log('long list format of files: -l');
 if (program.decorator) console.log('adorn file decorators on files: -F');
 
-
 let fileList = [];
 
 // processes file list to print
 const callback = () => {
-  console.log("callback called");
-
+  console.log("callback called. File list completed");
   console.log(fileList);
-
 }
 
-
+// process the file list
 let iterator = (index) => {
 
   if (index == program.args.length) {
@@ -40,25 +37,24 @@ let iterator = (index) => {
   fs.stat(program.args[index], (err, stats) => {
 
     const path = program.args[index];
-    console.log('PROCESS ' + path + ' AT INDEX: ' + index);
-
+    // console.log('PROCESS ' + path + ' AT INDEX: ' + index);
 
     // error file.
     if (err) {
-      fileList.push({ name: path, isDir: false, isFile: false, subFiles: null });
+      fileList.push({ name: path, isDir: false, isFile: false, files: null });
       // console.log('error with ' + path);
 
     }
 
     else if (stats.isDirectory()) {
-      // console.log(path + ' IS A DIRECTORY');
-      fileList.push({ name: path, isDir: true, isFile: false, subFiles: null });
-
+      const fileData = { name: path, isDir: true, isFile: false, files: null };
+      fileData.files = fs.readdirSync(path);
+      fileList.push(fileData);
     }
 
     else if (stats.isFile()) {
       // console.log(path + ' IS A FILE');
-      fileList.push({ name: path, isDir: false, isFile: true, subFiles: null });
+      fileList.push({ name: path, isDir: false, isFile: true, files: null });
 
     }
 
