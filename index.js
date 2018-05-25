@@ -15,34 +15,57 @@ if (program.long) console.log('long list format of files: -l');
 if (program.decorator) console.log('adorn file decorators on files: -F');
 
 
-const fileList = program.args;
-console.log(fileList);
+let fileList = [];
+
+// processes file list to print
+const callback = () => {
+  console.log("callback called");
+
+  console.log(fileList);
+
+}
 
 
-fs.readdir('.', (err, files) => {
+let iterator = (index) => {
 
-  if (err) {
-    console.log('error retrieving files');
+  if (index == program.args.length) {
+
+    console.log('ALL DONE LOOPING');
+
+    // tell caller that data is processed
+    callback();
     return;
   }
 
-  // prepare file list
-  console.log(files);
+  fs.stat(program.args[index], (err, stats) => {
+
+    const path = program.args[index];
+    console.log('PROCESS ' + path + ' AT INDEX: ' + index);
 
 
+    // error file.
+    if (err) {
+      fileList.push({ name: path, isDir: false, isFile: false, subFiles: null });
+      // console.log('error with ' + path);
 
+    }
 
+    else if (stats.isDirectory()) {
+      // console.log(path + ' IS A DIRECTORY');
+      fileList.push({ name: path, isDir: true, isFile: false, subFiles: null });
 
+    }
 
-});
+    else if (stats.isFile()) {
+      // console.log(path + ' IS A FILE');
+      fileList.push({ name: path, isDir: false, isFile: true, subFiles: null });
 
+    }
 
+    iterator(index + 1)
 
+  });
 
+}
 
-
-
-
-
-
-
+iterator(0);
