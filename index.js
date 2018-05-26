@@ -2,6 +2,19 @@
 'use strict'
 
 const fs = require('fs');
+const path = require('path');
+
+// 0111 -- checks each mode value to determine if file is executable
+const EXEC_MASK = 73;
+
+const canExecuteFile = (statObj) => {
+
+  return statObj.mode & EXEC_MASK;
+}
+
+const createFileData = (name, stat, filelist = []) => {
+  return { name: name, stat: stat, filelist: filelist };
+}
 
 const program = require('commander')
   .usage('[options] [file]')
@@ -13,127 +26,93 @@ const program = require('commander')
 // hack to add file argument if empty
 // TODO: I'd like to be able to just incorporate this into the command line processing above
 if (program.args.length == 0) {
-  program.args.push('./');
+  program.args.push('.');
 }
 
-let fileArgStats = {};
+let fileList = [];
 
-// stats for the command file arguments
-for (const fileArg of program.args) {
+// fetch all the file data listed in arguments
+program.args.forEach((fileArg) => {
 
   try {
-    fileArgStats[fileArg] = fs.statSync(fileArg);
-  }
 
+    const fileArgData = createFileData(fileArg, fs.statSync(fileArg));
+
+    // fetch sub files
+    if (fileArgData.stat.isDirectory()) {
+
+      // get the files in the directory
+      const containedFileNames = fs.readdirSync(fileArgData.name);
+
+      // add the . and .. directories since they're not returned from readdir()
+      containedFileNames.unshift('.', '..');
+
+      containedFileNames.forEach((fileName) => {
+        const st = fs.statSync(path.join(fileArgData.name, fileName));
+        fileArgData.filelist.push(createFileData(fileName, st));
+      });
+
+      fileList.push(fileArgData);
+    }
+
+    else if (fileArgData.stat.isFile()) {
+      fileList.push(fileArgData);
+    }
+
+    // TODO: Symbolic link, named pipes.. etc
+
+  }
   catch (err) {
     // replace kpbLS with name of program
-    console.log('kpbLS: ' + fileArg + ': no such file or directory');
+    console.log('LS: ' + fileArg + ': no such file or directory');
   }
-}
-
-
-Object.keys(fileArgStats).forEach((key) => {
-
-  if (fileArgStats[key].isDirectory()) {
-    console.log(key + ' is directory... get its files');
-  }
-
-  else if (fileArgStats[key].isFile()) {
-    console.log(key + ' is a file...nothing else needs to be done');
-
-  }
-
-
 });
 
+// print files
+fileList.forEach((fileArgs) => {
 
+  if (fileArgs.stat.isDirectory()) {
 
+    console.log('\n' + fileArgs.name + ':');
 
-// print
-// for (const key in fileArgStats) {
+    fileArgs.filelist.forEach((file) => {
 
+      // append the / to subdirectory name
+      if (program.decorator) {
 
+        if (file.stat.isDirectory()) {
+          file.name = path.join(file.name, '/');
+        }
 
+        else if (file.stat.isFile()) {
+          if (program.decorator && canExecuteFile(file.stat)) {
+            file.name += '*';
+          }
 
+        }
 
+      }
 
-//   // eslint: guard-for-in activated in .eslintrc.json
-//   if (Object.prototype.hasOwnProperty(fileArgStats, key)) {
+      // display all files
+      if (program.all) {
+        console.log(file.name);
+      }
 
-//     const element = fileArgStats[key];
-//     // console.log(element);
+      // do not display hidden file
+      else if (file.name.search(/\..*$/) != 0) {
+        console.log(file.name);
+      }
 
-//   }
+    });
+  }
 
-//   else {
-//     console.log('key is not in file arg list');
-//   }
-// }
+  else if (fileArgs.stat.isFile()) {
 
-// // print the processed file list according to options provided
-// const printFiles = (fileList) => {
+    if (program.decorator && canExecuteFile(fileArgs.stat)) {
+      fileArgs.name += '*';
+    }
 
-//   for (const fileArg of fileList) {
+    console.log(fileArgs.name);
 
-//     if (fileArg.isDir) {
-
-//       console.log(fileArg.name + ':');
-
-
-//     }
-
-//     else if (fileArg.isFile) {
-//       console.log(fileArg.name);
-
-//     }
-
-//     else {
-//       console.log(fileArg.name + ': no such file or directory');
-//     }
-
-//   }
-// }
-
-// let fileList = [];
-
-// // process file arguments
-// let iterator = (index, callback) => {
-
-//   if (index == program.args.length) {
-//     callback(fileList);
-//     return;
-//   }
-
-//   const path = program.args[index];
-
-//   fs.stat(path, (err, stats) => {
-
-//     if (err) {
-//       fileList.push(createFileDataObj(path, false, false));
-//     }
-
-//     else if (stats.isDirectory()) {
-
-//       const fileData = createFileDataObj(path, true, false);
-
-//       // fileData.files = fs.readdirSync(path);
-
-//       // fileData.files.push('.');
-//       // fileData.files.push('..');
-//       // fileData.files.sort();
-
-//       fileList.push(fileData);
-
-//     }
-
-//     else if (stats.isFile()) {
-//       fileList.push(createFileDataObj(path, false, true));
-//     }
-
-//     iterator(index + 1, callback);
-
-//   });
-
-// }
-
-// iterator(0, printFiles);
+  }
+});
