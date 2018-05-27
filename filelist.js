@@ -31,25 +31,17 @@ exports.GetFileList = (argList) => {
           fileArgData.filelist.push(createFileData(fileName, st));
         });
 
-        fileList.push(fileArgData);
       }
 
-      else if (fileArgData.stat.isFile()) {
-        fileList.push(fileArgData);
-      }
-
-      // TODO: Symbolic link, named pipes.. etc
-
+      fileList.push(fileArgData);
     }
+
+    // create null file data object
     catch (err) {
-      // replace kpbLS with name of program
-      console.log('LS: ' + fileArg + ': no such file or directory');
+      fileList.push(createFileData(fileArg, null));
     }
   });
 
-
   return fileList;
-
-
 }
 
