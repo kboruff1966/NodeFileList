@@ -4,19 +4,22 @@
 const { GetFileList } = require('./filelist');
 const path = require('path');
 
+// TODO: Add this function to the stat object and put in filelist.js
 
-// 0111 -- checks each mode value to determine if file is executable
-const EXEC_MASK = 73;
-
+// checks each mode value to determine if file is executable
 const canExecuteFile = (statObj) => {
+
+  // 73 base 10 === 0111 
+  const EXEC_MASK = 73;
+
   return statObj.mode & EXEC_MASK;
 }
 
-
+// commander seems to be the only command line arg package where -abc === -a -b -c. 
+// yargs doesn't seem to offer that. 
 const program = require('commander')
   .usage('[options] [file]')
   .option('-a, --all', 'List all')
-  .option('-l, --long', 'Long list format')
   .option('-F, --decorator', 'displays file decorators: /, * or @')
   .parse(process.argv);
 
