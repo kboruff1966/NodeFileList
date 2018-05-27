@@ -1,20 +1,17 @@
 #!/usr/bin/env node
 'use strict'
 
-const fs = require('fs');
+const { GetFileList } = require('./filelist');
 const path = require('path');
+
 
 // 0111 -- checks each mode value to determine if file is executable
 const EXEC_MASK = 73;
 
 const canExecuteFile = (statObj) => {
-
   return statObj.mode & EXEC_MASK;
 }
 
-const createFileData = (name, stat, filelist = []) => {
-  return { name: name, stat: stat, filelist: filelist };
-}
 
 const program = require('commander')
   .usage('[options] [file]')
@@ -23,50 +20,7 @@ const program = require('commander')
   .option('-F, --decorator', 'displays file decorators: /, * or @')
   .parse(process.argv);
 
-// hack to add file argument if empty
-// TODO: I'd like to be able to just incorporate this into the command line processing above
-if (program.args.length == 0) {
-  program.args.push('.');
-}
-
-let fileList = [];
-
-// fetch all the file data listed in arguments
-program.args.forEach((fileArg) => {
-
-  try {
-
-    const fileArgData = createFileData(fileArg, fs.statSync(fileArg));
-
-    // fetch sub files
-    if (fileArgData.stat.isDirectory()) {
-
-      // get the files in the directory
-      const containedFileNames = fs.readdirSync(fileArgData.name);
-
-      // add the . and .. directories since they're not returned from readdir()
-      containedFileNames.unshift('.', '..');
-
-      containedFileNames.forEach((fileName) => {
-        const st = fs.statSync(path.join(fileArgData.name, fileName));
-        fileArgData.filelist.push(createFileData(fileName, st));
-      });
-
-      fileList.push(fileArgData);
-    }
-
-    else if (fileArgData.stat.isFile()) {
-      fileList.push(fileArgData);
-    }
-
-    // TODO: Symbolic link, named pipes.. etc
-
-  }
-  catch (err) {
-    // replace kpbLS with name of program
-    console.log('LS: ' + fileArg + ': no such file or directory');
-  }
-});
+const fileList = GetFileList(program.args.length === 0 ? ['.'] : program.args);
 
 // print files
 fileList.forEach((fileArgs) => {
