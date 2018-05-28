@@ -17,7 +17,8 @@ const canExecuteFile = (statObj) => {
 // yargs doesn't seem to offer that. 
 const program = require('commander')
   .usage('[options] [file]')
-  .option('-a, --all', 'List all')
+  .option('-a, --all', 'List all entries including . and ..')
+  .option('-A, --All', 'List all entries except . and ..')
   .option('-F, --decorator', 'displays file decorators: /, * or @')
   .parse(process.argv);
 
@@ -56,6 +57,12 @@ fileList.forEach((fileArgs) => {
       // display all files
       if (program.all) {
         console.log(file.name);
+      }
+
+      else if (program.All) {
+        if (file.name !== '.' && file.name !== '..') {
+          console.log(file.name);
+        }
       }
 
       // do not display hidden file
