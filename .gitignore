@@ -1,6 +1,5 @@
 node_modules
 .vscode
-.eslintrc.json
 foo.txt
 foo/a.txt
 foo/b.txt
