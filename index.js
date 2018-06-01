@@ -13,6 +13,8 @@ const canExecuteFile = (statObj) => {
   return statObj.mode & EXEC_MASK;
 }
 
+// howdy ho.... test github repo
+
 // commander seems to be the only command line arg package where -abc === -a -b -c
 // yargs doesn't seem to offer that. 
 const program = require('commander')
