@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/kboruff1966/NodeFileList#readme",
   "dependencies": {
+    "bluebird": "^3.5.1",
     "commander": "^2.15.1"
   },
   "devDependencies": {
